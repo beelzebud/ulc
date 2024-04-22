@@ -1,5 +1,4 @@
-﻿using Microsoft.Win32;
-using System;
+﻿using System;
 using System.Drawing;
 using System.IO;
 using System.IO.Compression;
@@ -16,112 +15,7 @@ public class Program
     {
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
-
-        try
-        {
-            // Detect system theme and set application theme accordingly
-            string systemTheme = GetSystemTheme();
-            if (systemTheme == "Dark")
-            {
-                // Set dark theme
-                SetDarkTheme();
-            }
-            else
-            {
-                // Set light theme
-                SetLightTheme();
-            }
-
-            Application.Run(new MainForm());
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        }
-    }
-
-    // Function to detect system theme
-    static string GetSystemTheme()
-    {
-        try
-        {
-            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"))
-            {
-                if (key != null)
-                {
-                    object themeValue = key.GetValue("AppsUseLightTheme");
-                    if (themeValue != null)
-                    {
-                        int theme = (int)themeValue;
-                        Console.WriteLine("System theme value: " + theme);
-                        return theme == 0 ? "Dark" : "Light";
-                    }
-                    else
-                    {
-                        Console.WriteLine("AppsUseLightTheme registry value is null.");
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("Themes registry key not found.");
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Error detecting system theme: " + ex.Message);
-        }
-
-        // Default to light theme if unable to detect
-        return "Light";
-    }
-
-    // Function to set dark theme
-    static void SetDarkTheme()
-    {
-        // Set background color to dark
-        Color darkBackgroundColor = Color.FromArgb(34, 34, 34);
-        Color darkTextColor = Color.White;
-        Color darkAccentColor = Color.FromArgb(65, 105, 225);
-
-        // Apply dark theme colors
-        SetThemeColors(darkBackgroundColor, darkTextColor, darkAccentColor);
-    }
-
-    // Function to set light theme
-    static void SetLightTheme()
-    {
-        // Set background color to light
-        Color lightBackgroundColor = Color.White;
-        Color lightTextColor = Color.Black;
-        Color lightAccentColor = Color.FromArgb(0, 122, 204);
-
-        // Apply light theme colors
-        SetThemeColors(lightBackgroundColor, lightTextColor, lightAccentColor);
-    }
-
-    // Function to apply theme colors
-    static void SetThemeColors(Color backgroundColor, Color textColor, Color accentColor)
-    {
-        // Check if there are any open forms
-        if (Application.OpenForms.Count > 0)
-        {
-            // Apply background color
-            foreach (Control control in Application.OpenForms[0].Controls)
-            {
-                control.BackColor = backgroundColor;
-                if (control is TextBox || control is Button || control is Label)
-                {
-                    control.ForeColor = textColor;
-                }
-            }
-
-            // Apply accent color to button
-            if (Application.OpenForms[0].Controls["button"] is Button button)
-            {
-                button.BackColor = accentColor;
-            }
-        }
+        Application.Run(new MainForm());
     }
 
     public class MainForm : Form
@@ -131,69 +25,68 @@ public class Program
         TextBox dllPathTextBox;
         Button browseButton;
 
-        public MainForm()
-        {
-            try
+            public MainForm()
             {
-                this.Size = new System.Drawing.Size(550, 600);
-                this.Text = "Update libretro Cores";
-                this.Icon = new System.Drawing.Icon(@"D:\Build\ulc\ulc\Resources\ulc.ico");
+                try
+                {
+                    this.Size = new System.Drawing.Size(550, 600);
+                    this.Text = "Update libretro Cores";
+                    this.Icon = new System.Drawing.Icon(@"D:\Build\ulc\ulc\Resources\ulc.ico");
 
-                button = new Button() { Name = "button", Text = "Update libretro Cores", Dock = DockStyle.Top };
-                button.Click += new EventHandler(Button_Click);
+                    button = new Button() { Text = "Update libretro Cores", Dock = DockStyle.Top };
+                    button.Click += new EventHandler(Button_Click);
 
-                textBox = new TextBox() { Multiline = true, ScrollBars = ScrollBars.Vertical, Dock = DockStyle.Fill, AcceptsReturn = true };
+                    textBox = new TextBox() { Multiline = true, ScrollBars = ScrollBars.Vertical, Dock = DockStyle.Fill, AcceptsReturn = true };
 
-                // Create a panel to hold the background image
-                Panel textBoxPanel = new Panel();
-                textBoxPanel.Dock = DockStyle.Fill;
+                    // Create a panel to hold the background image
+                    Panel textBoxPanel = new Panel();
+                    textBoxPanel.Dock = DockStyle.Fill;
+                
+                    // Add the text box to the panel
+                    textBoxPanel.Controls.Add(textBox);
 
-                // Add the text box to the panel
-                textBoxPanel.Controls.Add(textBox);
+                    dllPathTextBox = new TextBox() { Dock = DockStyle.Fill };
+                    dllPathTextBox.Text = @"D:\Emulators\RetroArch\RetroArch-Win64\cores\"; // Default path
 
-                dllPathTextBox = new TextBox() { Dock = DockStyle.Fill };
-                dllPathTextBox.Text = @"D:\Emulators\RetroArch\RetroArch-Win64\cores\"; // Default path
+                    browseButton = new Button() { Text = "Browse", Dock = DockStyle.Right };
+                    browseButton.Click += new EventHandler(BrowseButton_Click);
 
-                browseButton = new Button() { Text = "Browse", Dock = DockStyle.Right };
-                browseButton.Click += new EventHandler(BrowseButton_Click);
+                    // Create a new TableLayoutPanel.
+                    TableLayoutPanel panel = new TableLayoutPanel();
+                    panel.Dock = DockStyle.Top;
+                    panel.AutoSize = true;
+                    panel.ColumnCount = 3;
 
-                // Create a new TableLayoutPanel.
-                TableLayoutPanel panel = new TableLayoutPanel();
-                panel.Dock = DockStyle.Top;
-                panel.AutoSize = true;
-                panel.ColumnCount = 3;
+                    // Add the label and browse button to the panel.
+                    panel.Controls.Add(new Label() { Text = "Core location:" }, 0, 0);
+                    panel.Controls.Add(browseButton, 1, 0);
+                    panel.Controls.Add(dllPathTextBox, 2, 0);
 
-                // Add the label and browse button to the panel.
-                panel.Controls.Add(new Label() { Text = "libretro Cores:" }, 0, 0);
-                panel.Controls.Add(browseButton, 1, 0);
-                panel.Controls.Add(dllPathTextBox, 2, 0);
+                    // Set the column style to make the text box stretch to the edge of the window.
+                    panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+                    panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+                    panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
 
-                // Set the column style to make the text box stretch to the edge of the window.
-                panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-                panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-                panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-
-                // Add the panel with the text box, button, and table layout panel to the form
-                Controls.Add(textBoxPanel);
-                Controls.Add(panel);
-                Controls.Add(button);
+                    // Add the panel with the text box, button, and table layout panel to the form
+                    Controls.Add(textBoxPanel);
+                    Controls.Add(panel);
+                    Controls.Add(button);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("An error occurred during initialization: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    throw; // Rethrow the exception to halt program execution
+                }
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show("An error occurred during initialization: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                throw; // Rethrow the exception to halt program execution
-            }
-        }
 
-        // Rest of your code...
-        private async void Button_Click(object sender, EventArgs e)
+            private async void Button_Click(object sender, EventArgs e)
         {
-            textBox.AppendText("Button clicked, starting update process...\r\n");
+            textBox.AppendText("Now starting the update process...\r\n");
 
             string dllDirectory = dllPathTextBox.Text; // The directory where your DLL files are located
             string[] dllFiles = Directory.GetFiles(dllDirectory, "*.dll"); // Get all DLL files in the directory
 
-            textBox.AppendText($"Found {dllFiles.Length} DLL files in {dllDirectory}\r\n");
+            textBox.AppendText($"Found {dllFiles.Length} libretro cores in {dllDirectory}\r\n");
 
             foreach (string dllFile in dllFiles)
             {
@@ -302,5 +195,4 @@ public class Program
         }
     }
 }
-
 
