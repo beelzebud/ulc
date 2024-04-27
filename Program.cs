@@ -25,61 +25,61 @@ public class Program
         TextBox dllPathTextBox;
         Button browseButton;
 
-            public MainForm()
+        public MainForm()
+        {
+            try
             {
-                try
-                {
-                    this.Size = new System.Drawing.Size(550, 600);
-                    this.Text = "Update libretro Cores";
-                    this.Icon = new System.Drawing.Icon(@"D:\Build\ulc\ulc\Resources\ulc.ico");
+                this.Size = new System.Drawing.Size(500, 300);
+                this.Text = "Update libretro Cores";
+                this.Icon = new System.Drawing.Icon(@"D:\Build\ulc\ulc\Resources\ulc.ico");
 
-                    button = new Button() { Text = "Update libretro Cores", Dock = DockStyle.Top };
-                    button.Click += new EventHandler(Button_Click);
+                button = new Button() { Text = "Update libretro Cores", Dock = DockStyle.Top };
+                button.Click += new EventHandler(Button_Click);
 
-                    textBox = new TextBox() { Multiline = true, ScrollBars = ScrollBars.Vertical, Dock = DockStyle.Fill, AcceptsReturn = true };
+                textBox = new TextBox() { Multiline = true, ScrollBars = ScrollBars.Vertical, Dock = DockStyle.Fill, AcceptsReturn = true };
 
-                    // Create a panel to hold the background image
-                    Panel textBoxPanel = new Panel();
-                    textBoxPanel.Dock = DockStyle.Fill;
-                
-                    // Add the text box to the panel
-                    textBoxPanel.Controls.Add(textBox);
+                // Create a panel to hold the background image
+                Panel textBoxPanel = new Panel();
+                textBoxPanel.Dock = DockStyle.Fill;
 
-                    dllPathTextBox = new TextBox() { Dock = DockStyle.Fill };
-                    dllPathTextBox.Text = @"D:\Emulators\RetroArch\RetroArch-Win64\cores\"; // Default path
+                // Add the text box to the panel
+                textBoxPanel.Controls.Add(textBox);
 
-                    browseButton = new Button() { Text = "Browse", Dock = DockStyle.Right };
-                    browseButton.Click += new EventHandler(BrowseButton_Click);
+                dllPathTextBox = new TextBox() { Dock = DockStyle.Fill };
+                dllPathTextBox.Text = @"D:\Emulators\RetroArch\RetroArch-Win64\cores\"; // Default path
 
-                    // Create a new TableLayoutPanel.
-                    TableLayoutPanel panel = new TableLayoutPanel();
-                    panel.Dock = DockStyle.Top;
-                    panel.AutoSize = true;
-                    panel.ColumnCount = 3;
+                browseButton = new Button() { Text = "Browse", Dock = DockStyle.Right };
+                browseButton.Click += new EventHandler(BrowseButton_Click);
 
-                    // Add the label and browse button to the panel.
-                    panel.Controls.Add(new Label() { Text = "Core location:" }, 0, 0);
-                    panel.Controls.Add(browseButton, 1, 0);
-                    panel.Controls.Add(dllPathTextBox, 2, 0);
+                // Create a new TableLayoutPanel.
+                TableLayoutPanel panel = new TableLayoutPanel();
+                panel.Dock = DockStyle.Top;
+                panel.AutoSize = true;
+                panel.ColumnCount = 3;
 
-                    // Set the column style to make the text box stretch to the edge of the window.
-                    panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-                    panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-                    panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+                // Add the label and browse button to the panel.
+                panel.Controls.Add(new Label() { Text = "Core location:" }, 0, 0);
+                panel.Controls.Add(browseButton, 1, 0);
+                panel.Controls.Add(dllPathTextBox, 2, 0);
 
-                    // Add the panel with the text box, button, and table layout panel to the form
-                    Controls.Add(textBoxPanel);
-                    Controls.Add(panel);
-                    Controls.Add(button);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("An error occurred during initialization: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    throw; // Rethrow the exception to halt program execution
-                }
+                // Set the column style to make the text box stretch to the edge of the window.
+                panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+                panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+                panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+
+                // Add the panel with the text box, button, and table layout panel to the form
+                Controls.Add(textBoxPanel);
+                Controls.Add(panel);
+                Controls.Add(button);
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An error occurred during initialization: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                throw; // Rethrow the exception to halt program execution
+            }
+        }
 
-            private async void Button_Click(object sender, EventArgs e)
+        private async void Button_Click(object sender, EventArgs e)
         {
             textBox.AppendText("Now starting the update process...\r\n");
 
@@ -105,6 +105,9 @@ public class Program
                     // Log additional exception details if needed
                 }
             }
+
+            // Append message to the text box when updates are done
+            textBox.AppendText("Libretro core updates have been completed.\r\n");
         }
 
         private async Task UpdateDLLsAsync(string tempPath, string zipUrl, string userDirectory, TextBox textBox)
@@ -195,4 +198,3 @@ public class Program
         }
     }
 }
-
