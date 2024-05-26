@@ -9,6 +9,7 @@ using System.Windows.Forms;
 public class Program
 {
     static string remoteUrl = "https://buildbot.libretro.com/nightly/windows/x86_64/latest/";
+    static string assetsUrl = "https://buildbot.libretro.com/assets/frontend/assets.zip";
 
     [STAThread]
     static void Main()
@@ -20,160 +21,302 @@ public class Program
 
     public class MainForm : Form
     {
-        Button button;
-        TextBox textBox;
-        TextBox dllPathTextBox;
-        Button browseButton;
+        private Button updateCoresButton;
+        private Button updateAssetsButton;
+        private Button stopButton;
+        private Button aboutButton;
+        private TextBox textBox;
+        private TextBox dllPathTextBox;
+        private TextBox assetsPathTextBox;
+        private Button browseDllButton;
+        private Button browseAssetsButton;
+        private bool isProcessRunning = false;
 
         public MainForm()
         {
             try
             {
-                this.Size = new System.Drawing.Size(500, 300);
-                this.Text = "Update libretro Cores";
-                this.Icon = new System.Drawing.Icon(@"D:\Build\ulc\ulc\Resources\ulc.ico");
-
-                button = new Button() { Text = "Update libretro Cores", Dock = DockStyle.Top };
-                button.Click += new EventHandler(Button_Click);
-
-                textBox = new TextBox() { Multiline = true, ScrollBars = ScrollBars.Vertical, Dock = DockStyle.Fill, AcceptsReturn = true };
-
-                // Create a panel to hold the background image
-                Panel textBoxPanel = new Panel();
-                textBoxPanel.Dock = DockStyle.Fill;
-
-                // Add the text box to the panel
-                textBoxPanel.Controls.Add(textBox);
-
-                dllPathTextBox = new TextBox() { Dock = DockStyle.Fill };
-                dllPathTextBox.Text = @"D:\Emulators\RetroArch\RetroArch-Win64\cores\"; // Default path
-
-                browseButton = new Button() { Text = "Browse", Dock = DockStyle.Right };
-                browseButton.Click += new EventHandler(BrowseButton_Click);
-
-                // Create a new TableLayoutPanel.
-                TableLayoutPanel panel = new TableLayoutPanel();
-                panel.Dock = DockStyle.Top;
-                panel.AutoSize = true;
-                panel.ColumnCount = 3;
-
-                // Add the label and browse button to the panel.
-                panel.Controls.Add(new Label() { Text = "Core location:" }, 0, 0);
-                panel.Controls.Add(browseButton, 1, 0);
-                panel.Controls.Add(dllPathTextBox, 2, 0);
-
-                // Set the column style to make the text box stretch to the edge of the window.
-                panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-                panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-                panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-
-                // Add the panel with the text box, button, and table layout panel to the form
-                Controls.Add(textBoxPanel);
-                Controls.Add(panel);
-                Controls.Add(button);
+                InitializeComponents();
+                stopButton.Enabled = false; // Initially disable the Stop button
             }
             catch (Exception ex)
             {
                 MessageBox.Show("An error occurred during initialization: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                throw; // Rethrow the exception to halt program execution
+                throw;
             }
         }
 
-        private async void Button_Click(object sender, EventArgs e)
+        private void InitializeComponents()
         {
-            textBox.AppendText("Now starting the update process...\r\n");
+            this.Size = new System.Drawing.Size(500, 400);
+            this.Text = "Update libretro Cores and Assets";
+            this.Icon = new System.Drawing.Icon(@"D:\Build\ulc\ulc\Resources\ulc.ico");
+            this.BackColor = Color.DarkGray;
 
-            string dllDirectory = dllPathTextBox.Text; // The directory where your DLL files are located
-            string[] dllFiles = Directory.GetFiles(dllDirectory, "*.dll"); // Get all DLL files in the directory
+            updateCoresButton = new Button() { Text = "Update libretro Cores", Dock = DockStyle.Top };
+            updateCoresButton.Click += new EventHandler(UpdateCoresButton_Click);
+
+            updateAssetsButton = new Button() { Text = "Update libretro Assets", Dock = DockStyle.Top };
+            updateAssetsButton.Click += new EventHandler(UpdateAssetsButton_Click);
+
+            stopButton = new Button() { Text = "Stop", Dock = DockStyle.Bottom }; // Set DockStyle to Bottom
+            stopButton.Click += new EventHandler(StopButton_Click);
+
+            aboutButton = new Button() { Text = "About", Dock = DockStyle.Bottom };
+            aboutButton.Click += AboutButton_Click;
+            aboutButton.FlatStyle = FlatStyle.Flat;
+            aboutButton.FlatAppearance.BorderColor = Color.Red; // Change to your desired color
+
+            textBox = new TextBox() { Multiline = true, ScrollBars = ScrollBars.Vertical, Dock = DockStyle.Fill, AcceptsReturn = true };
+
+            Panel textBoxPanel = new Panel();
+            textBoxPanel.Dock = DockStyle.Fill;
+            textBoxPanel.Controls.Add(textBox);
+            // Set text box colors
+            textBox.ForeColor = Color.Lime;
+            textBox.BackColor = Color.Black;
+
+            dllPathTextBox = new TextBox() { Dock = DockStyle.Fill };
+            dllPathTextBox.Text = @"D:\Emulators\RetroArch\RetroArch-Win64\cores\";
+
+            assetsPathTextBox = new TextBox() { Dock = DockStyle.Fill };
+            assetsPathTextBox.Text = @"D:\Emulators\RetroArch\RetroArch-Win64\assets\";
+
+            browseDllButton = new Button() { Text = "Browse", Dock = DockStyle.Right };
+            browseDllButton.Click += new EventHandler(BrowseDllButton_Click);
+
+            browseAssetsButton = new Button() { Text = "Browse", Dock = DockStyle.Right };
+            browseAssetsButton.Click += new EventHandler(BrowseAssetsButton_Click);
+
+            TableLayoutPanel dllPanel = new TableLayoutPanel();
+            dllPanel.Dock = DockStyle.Top;
+            dllPanel.AutoSize = true;
+            dllPanel.ColumnCount = 3;
+            dllPanel.Controls.Add(new Label() { Text = "Core location:" }, 0, 0);
+            dllPanel.Controls.Add(dllPathTextBox, 1, 0);
+            dllPanel.Controls.Add(browseDllButton, 2, 0);
+
+            dllPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            dllPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            dllPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+
+            TableLayoutPanel assetsPanel = new TableLayoutPanel();
+            assetsPanel.Dock = DockStyle.Top;
+            assetsPanel.AutoSize = true;
+            assetsPanel.ColumnCount = 3;
+            assetsPanel.Controls.Add(new Label() { Text = "Assets location:" }, 0, 0);
+            assetsPanel.Controls.Add(assetsPathTextBox, 1, 0);
+            assetsPanel.Controls.Add(browseAssetsButton, 2, 0);
+
+            assetsPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            assetsPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            assetsPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+
+            // Set button colors
+            updateCoresButton.ForeColor = Color.Lime;
+            updateCoresButton.BackColor = Color.Black;
+            updateAssetsButton.ForeColor = Color.Lime;
+            updateAssetsButton.BackColor = Color.Black;
+            stopButton.ForeColor = Color.Lime;
+            stopButton.BackColor = Color.Black;
+            aboutButton.ForeColor = Color.Lime;
+            aboutButton.BackColor = Color.Black;
+            browseDllButton.ForeColor = Color.Lime;
+            browseDllButton.BackColor = Color.Black;
+            browseAssetsButton.ForeColor = Color.Lime;
+            browseAssetsButton.BackColor = Color.Black;
+
+            updateCoresButton.FlatStyle = FlatStyle.Flat;
+            updateCoresButton.FlatAppearance.BorderColor = Color.Lime;
+            updateAssetsButton.FlatStyle = FlatStyle.Flat;
+            updateAssetsButton.FlatAppearance.BorderColor = Color.Lime;
+            stopButton.FlatStyle = FlatStyle.Flat;
+            stopButton.FlatAppearance.BorderColor = Color.Lime;
+            browseDllButton.FlatStyle = FlatStyle.Flat;
+            browseDllButton.FlatAppearance.BorderColor = Color.Lime;
+            browseAssetsButton.FlatStyle = FlatStyle.Flat;
+            browseAssetsButton.FlatAppearance.BorderColor = Color.Lime;
+            aboutButton = new Button() { Text = "About", Dock = DockStyle.Bottom };
+            aboutButton.Click += AboutButton_Click;
+            aboutButton.FlatStyle = FlatStyle.Flat;
+            aboutButton.FlatAppearance.BorderColor = Color.Lime;
+
+
+            Controls.Add(textBoxPanel);
+            Controls.Add(assetsPanel);
+            Controls.Add(dllPanel);
+            Controls.Add(updateAssetsButton);
+            Controls.Add(updateCoresButton);
+            Controls.Add(stopButton); // Add the Stop button after other controls
+            Controls.Add(aboutButton);
+        }
+
+        private void EnableButtons(bool enable)
+        {
+            updateCoresButton.Enabled = enable;
+            updateAssetsButton.Enabled = enable;
+            stopButton.Enabled = enable; // Enable/disable Stop button
+            browseDllButton.Enabled = enable;
+            browseAssetsButton.Enabled = enable;
+        }
+
+        private void AboutButton_Click(object sender, EventArgs e)
+        {
+            // Open the AboutForm
+            AboutForm aboutForm = new AboutForm();
+            aboutForm.ShowDialog();
+        }
+        private void StopButton_Click(object sender, EventArgs e)
+        {
+            // Set the flag to indicate the process should be stopped
+            isProcessRunning = false;
+
+            // Disable the Stop button
+            stopButton.Enabled = false;
+
+            textBox.AppendText("Process stopped by user.\r\n");
+        }
+
+        private async void UpdateCoresButton_Click(object sender, EventArgs e)
+        {
+            // Set the flag to indicate a process is running
+            isProcessRunning = true;
+
+            // Disable buttons to prevent concurrent updates
+            EnableButtons(false);
+
+            // Enable the Stop button
+            stopButton.Enabled = true;
+
+            textBox.AppendText("Now starting the core update process...\r\n");
+
+            string dllDirectory = dllPathTextBox.Text;
+            string[] dllFiles = Directory.GetFiles(dllDirectory, "*.dll");
 
             textBox.AppendText($"Found {dllFiles.Length} libretro cores in {dllDirectory}\r\n");
 
             foreach (string dllFile in dllFiles)
             {
-                string fileName = Path.GetFileNameWithoutExtension(dllFile); // Get the file name without the extension
-                string zipUrl = remoteUrl + fileName + ".dll.zip"; // Append ".dll.zip" to the file name
+                // Check if the process should be stopped
+                if (!isProcessRunning)
+                    break;
 
-                string tempPath = Path.Combine(dllDirectory, "temp"); // Temporary directory
+                string fileName = Path.GetFileNameWithoutExtension(dllFile);
+                string zipUrl = remoteUrl + fileName + ".dll.zip";
+                string tempPath = Path.Combine(dllDirectory, "temp");
 
                 try
                 {
-                    await UpdateDLLsAsync(tempPath, zipUrl, dllDirectory, textBox);
+                    await UpdateFilesAsync(tempPath, zipUrl, dllDirectory, textBox).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
-                    textBox.AppendText($"Error: {ex.Message}\r\n");
-                    // Log additional exception details if needed
+                    textBox.AppendText($"Error updating {fileName}: {ex.Message}\r\n");
                 }
             }
 
-            // Append message to the text box when updates are done
             textBox.AppendText("Libretro core updates have been completed.\r\n");
+
+            // Enable buttons since update is completed
+            EnableButtons(true);
+
+            // Disable the Stop button after the process completes
+            stopButton.Enabled = false;
+        }
+        private async void UpdateAssetsButton_Click(object sender, EventArgs e)
+        {
+            // Set the flag to indicate a process is running
+            isProcessRunning = true;
+
+            // Disable buttons to prevent concurrent updates
+            EnableButtons(false);
+
+            // Enable the Stop button
+            stopButton.Enabled = true;
+
+            textBox.AppendText("Now starting the asset update process...\r\n");
+
+            string assetsDirectory = assetsPathTextBox.Text;
+            string tempPath = Path.Combine(assetsDirectory, "temp");
+
+            try
+            {
+                await UpdateFilesAsync(tempPath, assetsUrl, assetsDirectory, textBox).ConfigureAwait(false);
+                textBox.AppendText("Libretro asset updates have been completed.\r\n");
+            }
+            catch (Exception ex)
+            {
+                textBox.AppendText($"Error updating assets: {ex.Message}\r\n");
+            }
+
+            // Enable buttons since update is completed
+            EnableButtons(true);
+
+            // Disable the Stop button after the process completes
+            stopButton.Enabled = false;
         }
 
-        private async Task UpdateDLLsAsync(string tempPath, string zipUrl, string userDirectory, TextBox textBox)
+        private async Task UpdateFilesAsync(string tempPath, string zipUrl, string destinationDirectory, TextBox textBox)
         {
             try
             {
-                // Ensure the destination directory exists
                 Directory.CreateDirectory(tempPath);
-
                 string zipPath = Path.Combine(tempPath, "temp.zip");
 
                 using (HttpClient client = new HttpClient())
                 {
-                    using (HttpResponseMessage response = await client.GetAsync(zipUrl))
+                    using (HttpResponseMessage response = await client.GetAsync(zipUrl).ConfigureAwait(false))
                     {
                         response.EnsureSuccessStatusCode();
-
-                        using (Stream contentStream = await response.Content.ReadAsStreamAsync(),
+                        using (Stream contentStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false),
                                       fileStream = new FileStream(zipPath, FileMode.Create, FileAccess.Write, FileShare.None))
                         {
-                            await contentStream.CopyToAsync(fileStream);
+                            await contentStream.CopyToAsync(fileStream).ConfigureAwait(false);
                         }
                     }
                 }
 
-                // Get the names of the files in the zip file
                 using (ZipArchive archive = ZipFile.OpenRead(zipPath))
                 {
                     foreach (ZipArchiveEntry entry in archive.Entries)
                     {
-                        string fileName = Path.GetFileName(entry.FullName);
-                        string destFilePath = Path.Combine(userDirectory, fileName);
+                        if (string.IsNullOrEmpty(entry.Name))
+                        {
+                            string directoryPath = Path.Combine(destinationDirectory, entry.FullName);
+                            Directory.CreateDirectory(directoryPath);
+                            continue;
+                        }
+
+                        string destFilePath = Path.Combine(destinationDirectory, entry.FullName);
                         string tempFilePath = Path.Combine(tempPath, entry.FullName);
 
-                        // Extract files to temp directory
+                        Directory.CreateDirectory(Path.GetDirectoryName(tempFilePath));
                         entry.ExtractToFile(tempFilePath, true);
 
-                        // Check if the file exists in the user directory
                         if (File.Exists(destFilePath))
                         {
-                            DateTime remoteLastModified = entry.LastWriteTime.DateTime; // Convert DateTimeOffset to DateTime
+                            DateTime remoteLastModified = entry.LastWriteTime.DateTime;
                             DateTime localLastModified = File.GetLastWriteTime(destFilePath);
 
-                            // Compare last modified timestamps
                             if (remoteLastModified > localLastModified)
                             {
-                                // Remote file is newer, update it
                                 File.Copy(tempFilePath, destFilePath, true);
-                                textBox.AppendText($"Updated {fileName}\r\n");
+                                textBox.AppendText($"Updated {entry.FullName}\r\n");
                             }
                             else
                             {
-                                // Local file is up to date
-                                textBox.AppendText($"Skipping {fileName} (up to date)\r\n");
+                                textBox.AppendText($"Skipping {entry.FullName} (up to date)\r\n");
                             }
                         }
                         else
                         {
-                            // File doesn't exist locally, copy it
+                            Directory.CreateDirectory(Path.GetDirectoryName(destFilePath));
                             File.Copy(tempFilePath, destFilePath);
-                            textBox.AppendText($"Copied {fileName} (new file)\r\n");
+                            textBox.AppendText($"Copied {entry.FullName} (new file)\r\n");
                         }
                     }
                 }
 
-                // Clean up: delete temporary files
                 File.Delete(zipPath);
                 Directory.Delete(tempPath, true);
 
@@ -182,11 +325,10 @@ public class Program
             catch (Exception ex)
             {
                 textBox.AppendText($"Error: {ex.Message}\r\n");
-                // Log additional exception details if needed
             }
         }
 
-        private void BrowseButton_Click(object sender, EventArgs e)
+        private void BrowseDllButton_Click(object sender, EventArgs e)
         {
             using (FolderBrowserDialog dialog = new FolderBrowserDialog())
             {
@@ -194,6 +336,48 @@ public class Program
                 {
                     dllPathTextBox.Text = dialog.SelectedPath;
                 }
+            }
+        }
+
+        private void BrowseAssetsButton_Click(object sender, EventArgs e)
+        {
+            using (FolderBrowserDialog dialog = new FolderBrowserDialog())
+            {
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    assetsPathTextBox.Text = dialog.SelectedPath;
+                }
+            }
+        }
+        public class AboutForm : Form
+        {            public AboutForm()
+            {
+                // Initialize the AboutForm
+                InitializeComponents();
+            }
+
+            private void InitializeComponents()
+            {
+                // Design the AboutForm with labels, text boxes, images, etc. to display your information
+                // Example:
+                this.Text = "About";
+                this.Size = new Size(225, 125);
+                this.Icon = new System.Drawing.Icon(@"D:\Build\ulc\ulc\Resources\ulc.ico");
+                
+                PictureBox iconPictureBox = new PictureBox()
+                {
+                    Image = Icon.ToBitmap(),
+                    SizeMode = PictureBoxSizeMode.CenterImage,
+                    Dock = DockStyle.Fill,
+                    Height = 25, 
+                    Width = 25,// Adjust height as needed
+                };
+
+                Label titleLabel = new Label() { Text = "Update libretro Cores and assets", Dock = DockStyle.Top, TextAlign = ContentAlignment.MiddleCenter };
+                Label infoLabel = new Label() { Text = "©2024 John N. Bilbrey and ChatGPT", Dock = DockStyle.Bottom, TextAlign = ContentAlignment.BottomCenter };
+                Controls.Add(titleLabel);
+                Controls.Add(iconPictureBox);
+                Controls.Add(infoLabel);
             }
         }
     }
