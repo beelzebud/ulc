@@ -59,20 +59,19 @@ public class Program
             updateAssetsButton = new Button() { Text = "Update libretro Assets", Dock = DockStyle.Top };
             updateAssetsButton.Click += new EventHandler(UpdateAssetsButton_Click);
 
-            stopButton = new Button() { Text = "Stop", Dock = DockStyle.Bottom }; // Set DockStyle to Bottom
+            stopButton = new Button() { Text = "Stop", Dock = DockStyle.Bottom };
             stopButton.Click += new EventHandler(StopButton_Click);
 
             aboutButton = new Button() { Text = "About", Dock = DockStyle.Bottom };
             aboutButton.Click += AboutButton_Click;
             aboutButton.FlatStyle = FlatStyle.Flat;
-            aboutButton.FlatAppearance.BorderColor = Color.Red; // Change to your desired color
+            aboutButton.FlatAppearance.BorderColor = Color.Red;
 
             textBox = new TextBox() { Multiline = true, ScrollBars = ScrollBars.Vertical, Dock = DockStyle.Fill, AcceptsReturn = true };
 
             Panel textBoxPanel = new Panel();
             textBoxPanel.Dock = DockStyle.Fill;
             textBoxPanel.Controls.Add(textBox);
-            // Set text box colors
             textBox.ForeColor = Color.Lime;
             textBox.BackColor = Color.Black;
 
@@ -95,7 +94,6 @@ public class Program
             dllPanel.Controls.Add(new Label() { Text = "Core location:" }, 0, 0);
             dllPanel.Controls.Add(dllPathTextBox, 1, 0);
             dllPanel.Controls.Add(browseDllButton, 2, 0);
-
             dllPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             dllPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             dllPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
@@ -107,12 +105,10 @@ public class Program
             assetsPanel.Controls.Add(new Label() { Text = "Assets location:" }, 0, 0);
             assetsPanel.Controls.Add(assetsPathTextBox, 1, 0);
             assetsPanel.Controls.Add(browseAssetsButton, 2, 0);
-
             assetsPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             assetsPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             assetsPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
 
-            // Set button colors
             updateCoresButton.ForeColor = Color.Lime;
             updateCoresButton.BackColor = Color.Black;
             updateAssetsButton.ForeColor = Color.Lime;
@@ -136,18 +132,13 @@ public class Program
             browseDllButton.FlatAppearance.BorderColor = Color.Lime;
             browseAssetsButton.FlatStyle = FlatStyle.Flat;
             browseAssetsButton.FlatAppearance.BorderColor = Color.Lime;
-            aboutButton = new Button() { Text = "About", Dock = DockStyle.Bottom };
-            aboutButton.Click += AboutButton_Click;
-            aboutButton.FlatStyle = FlatStyle.Flat;
-            aboutButton.FlatAppearance.BorderColor = Color.Lime;
-
 
             Controls.Add(textBoxPanel);
             Controls.Add(assetsPanel);
             Controls.Add(dllPanel);
             Controls.Add(updateAssetsButton);
             Controls.Add(updateCoresButton);
-            Controls.Add(stopButton); // Add the Stop button after other controls
+            Controls.Add(stopButton);
             Controls.Add(aboutButton);
         }
 
@@ -155,38 +146,28 @@ public class Program
         {
             updateCoresButton.Enabled = enable;
             updateAssetsButton.Enabled = enable;
-            stopButton.Enabled = enable; // Enable/disable Stop button
+            stopButton.Enabled = !enable;
             browseDllButton.Enabled = enable;
             browseAssetsButton.Enabled = enable;
         }
 
         private void AboutButton_Click(object sender, EventArgs e)
         {
-            // Open the AboutForm
             AboutForm aboutForm = new AboutForm();
             aboutForm.ShowDialog();
         }
+
         private void StopButton_Click(object sender, EventArgs e)
         {
-            // Set the flag to indicate the process should be stopped
             isProcessRunning = false;
-
-            // Disable the Stop button
             stopButton.Enabled = false;
-
             textBox.AppendText("Process stopped by user.\r\n");
         }
 
         private async void UpdateCoresButton_Click(object sender, EventArgs e)
         {
-            // Set the flag to indicate a process is running
             isProcessRunning = true;
-
-            // Disable buttons to prevent concurrent updates
             EnableButtons(false);
-
-            // Enable the Stop button
-            stopButton.Enabled = true;
 
             textBox.AppendText("Now starting the core update process...\r\n");
 
@@ -197,7 +178,6 @@ public class Program
 
             foreach (string dllFile in dllFiles)
             {
-                // Check if the process should be stopped
                 if (!isProcessRunning)
                     break;
 
@@ -216,23 +196,13 @@ public class Program
             }
 
             textBox.AppendText("Libretro core updates have been completed.\r\n");
-
-            // Enable buttons since update is completed
             EnableButtons(true);
-
-            // Disable the Stop button after the process completes
-            stopButton.Enabled = false;
         }
+
         private async void UpdateAssetsButton_Click(object sender, EventArgs e)
         {
-            // Set the flag to indicate a process is running
             isProcessRunning = true;
-
-            // Disable buttons to prevent concurrent updates
             EnableButtons(false);
-
-            // Enable the Stop button
-            stopButton.Enabled = true;
 
             textBox.AppendText("Now starting the asset update process...\r\n");
 
@@ -249,11 +219,7 @@ public class Program
                 textBox.AppendText($"Error updating assets: {ex.Message}\r\n");
             }
 
-            // Enable buttons since update is completed
             EnableButtons(true);
-
-            // Disable the Stop button after the process completes
-            stopButton.Enabled = false;
         }
 
         private async Task UpdateFilesAsync(string tempPath, string zipUrl, string destinationDirectory, TextBox textBox)
@@ -349,32 +315,32 @@ public class Program
                 }
             }
         }
+
         public class AboutForm : Form
-        {            public AboutForm()
+        {
+            public AboutForm()
             {
-                // Initialize the AboutForm
                 InitializeComponents();
             }
 
             private void InitializeComponents()
             {
-                // Design the AboutForm with labels, text boxes, images, etc. to display your information
-                // Example:
                 this.Text = "About";
                 this.Size = new Size(225, 125);
                 this.Icon = new System.Drawing.Icon(@"D:\Build\ulc\ulc\Resources\ulc.ico");
-                
+
                 PictureBox iconPictureBox = new PictureBox()
                 {
                     Image = Icon.ToBitmap(),
                     SizeMode = PictureBoxSizeMode.CenterImage,
                     Dock = DockStyle.Fill,
-                    Height = 25, 
-                    Width = 25,// Adjust height as needed
+                    Height = 25,
+                    Width = 25,
                 };
 
                 Label titleLabel = new Label() { Text = "Update libretro Cores and assets", Dock = DockStyle.Top, TextAlign = ContentAlignment.MiddleCenter };
                 Label infoLabel = new Label() { Text = "©2024 John N. Bilbrey and ChatGPT", Dock = DockStyle.Bottom, TextAlign = ContentAlignment.BottomCenter };
+
                 Controls.Add(titleLabel);
                 Controls.Add(iconPictureBox);
                 Controls.Add(infoLabel);
