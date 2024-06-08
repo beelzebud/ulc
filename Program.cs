@@ -2,9 +2,12 @@
 using System.Drawing;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using SharpCompress.Archives;
+using SharpCompress.Common;
 
 public class Program
 {
@@ -12,6 +15,7 @@ public class Program
     public static string assetsUrl = "https://buildbot.libretro.com/assets/frontend/assets.zip";
     public static string infoUrl = "https://buildbot.libretro.com/assets/frontend/info.zip";
     public static string databaseUrl = "https://buildbot.libretro.com/assets/frontend/database-rdb.zip";
+    public static string retroarchUrl = "https://buildbot.libretro.com/nightly/windows/x86_64/RetroArch_update.7z";
 
     [STAThread]
     static void Main()
@@ -30,15 +34,18 @@ public class MainForm : Form
     private Button updateDatabaseButton;
     private Button stopButton;
     private Button aboutButton;
+    private Button updateRetroarchButton;
     private TextBox textBox;
     private TextBox dllPathTextBox;
     private TextBox assetsPathTextBox;
     private TextBox infoPathTextBox;
     private TextBox databasePathTextBox;
+    private TextBox retroarchPathTextBox;
     private Button browseDllButton;
     private Button browseAssetsButton;
     private Button browseInfoButton;
     private Button browseDatabaseButton;
+    private Button browseRetroarchButton;
     private bool isProcessRunning = false;
     private ProgressBar progressBar;
 
@@ -58,8 +65,8 @@ public class MainForm : Form
 
     private void InitializeComponents()
     {
-        this.Size = new System.Drawing.Size(500, 550);
-        this.Text = "Update libretro Cores and Assets";
+        this.Size = new System.Drawing.Size(500, 650);
+        this.Text = "libretro Updater";
         this.Icon = new System.Drawing.Icon(@"D:\Build\ulc\ulc\Resources\ulc.ico");
         this.BackColor = Color.DarkGray;
 
@@ -74,6 +81,9 @@ public class MainForm : Form
 
         updateDatabaseButton = new Button() { Text = "Update libretro Database", Dock = DockStyle.Top };
         updateDatabaseButton.Click += new EventHandler(UpdateDatabaseButton_Click);
+
+        updateRetroarchButton = new Button() { Text = "Update Retroarch", Dock = DockStyle.Top };
+        updateRetroarchButton.Click += new EventHandler(UpdateRetroarchButton_Click);
 
         stopButton = new Button() { Text = "Stop", Dock = DockStyle.Bottom };
         stopButton.Click += new EventHandler(StopButton_Click);
@@ -103,6 +113,9 @@ public class MainForm : Form
         databasePathTextBox = new TextBox() { Dock = DockStyle.Fill };
         databasePathTextBox.Text = @"D:\Emulators\RetroArch\RetroArch-Win64\database\";
 
+        retroarchPathTextBox = new TextBox() { Dock = DockStyle.Fill };
+        retroarchPathTextBox.Text = @"D:\Emulators\RetroArch\";
+
         browseDllButton = new Button() { Text = "Browse", Dock = DockStyle.Right };
         browseDllButton.Click += new EventHandler(BrowseDllButton_Click);
 
@@ -114,6 +127,9 @@ public class MainForm : Form
 
         browseDatabaseButton = new Button() { Text = "Browse", Dock = DockStyle.Right };
         browseDatabaseButton.Click += new EventHandler(BrowseDatabaseButton_Click);
+
+        browseRetroarchButton = new Button() { Text = "Browse", Dock = DockStyle.Right };
+        browseRetroarchButton.Click += new EventHandler(BrowseRetroarchButton_Click);
 
         progressBar = new ProgressBar() { Dock = DockStyle.Bottom, Height = 20 };
 
@@ -161,6 +177,17 @@ public class MainForm : Form
         databasePanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         databasePanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
 
+        TableLayoutPanel retroarchPanel = new TableLayoutPanel();
+        retroarchPanel.Dock = DockStyle.Top;
+        retroarchPanel.AutoSize = true;
+        retroarchPanel.ColumnCount = 3;
+        retroarchPanel.Controls.Add(new Label() { Text = "Retroarch location:" }, 0, 0);
+        retroarchPanel.Controls.Add(retroarchPathTextBox, 1, 0);
+        retroarchPanel.Controls.Add(browseRetroarchButton, 2, 0);
+        retroarchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        retroarchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        retroarchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+
         updateCoresButton.ForeColor = Color.Lime;
         updateCoresButton.BackColor = Color.Black;
         updateAssetsButton.ForeColor = Color.Lime;
@@ -169,6 +196,8 @@ public class MainForm : Form
         updateCoreInfoButton.BackColor = Color.Black;
         updateDatabaseButton.ForeColor = Color.Lime;
         updateDatabaseButton.BackColor = Color.Black;
+        updateRetroarchButton.ForeColor = Color.Lime;
+        updateRetroarchButton.BackColor = Color.Black;
         stopButton.ForeColor = Color.Lime;
         stopButton.BackColor = Color.Black;
         aboutButton.ForeColor = Color.Lime;
@@ -181,6 +210,8 @@ public class MainForm : Form
         browseInfoButton.BackColor = Color.Black;
         browseDatabaseButton.ForeColor = Color.Lime;
         browseDatabaseButton.BackColor = Color.Black;
+        browseRetroarchButton.ForeColor = Color.Lime;
+        browseRetroarchButton.BackColor = Color.Black;
 
         updateCoresButton.FlatStyle = FlatStyle.Flat;
         updateCoresButton.FlatAppearance.BorderColor = Color.Lime;
@@ -190,6 +221,8 @@ public class MainForm : Form
         updateCoreInfoButton.FlatAppearance.BorderColor = Color.Lime;
         updateDatabaseButton.FlatStyle = FlatStyle.Flat;
         updateDatabaseButton.FlatAppearance.BorderColor = Color.Lime;
+        updateRetroarchButton.FlatStyle = FlatStyle.Flat;
+        updateRetroarchButton.FlatAppearance.BorderColor = Color.Lime;
         stopButton.FlatStyle = FlatStyle.Flat;
         stopButton.FlatAppearance.BorderColor = Color.Lime;
         browseDllButton.FlatStyle = FlatStyle.Flat;
@@ -200,12 +233,16 @@ public class MainForm : Form
         browseInfoButton.FlatAppearance.BorderColor = Color.Lime;
         browseDatabaseButton.FlatStyle = FlatStyle.Flat;
         browseDatabaseButton.FlatAppearance.BorderColor = Color.Lime;
+        browseRetroarchButton.FlatStyle = FlatStyle.Flat;
+        browseRetroarchButton.FlatAppearance.BorderColor = Color.Lime;
 
         Controls.Add(textBoxPanel);
+        Controls.Add(retroarchPanel);
         Controls.Add(databasePanel);
         Controls.Add(infoPanel);
         Controls.Add(assetsPanel);
         Controls.Add(dllPanel);
+        Controls.Add(updateRetroarchButton);
         Controls.Add(updateDatabaseButton);
         Controls.Add(updateCoreInfoButton);
         Controls.Add(updateAssetsButton);
@@ -221,11 +258,13 @@ public class MainForm : Form
         updateAssetsButton.Enabled = enable;
         updateCoreInfoButton.Enabled = enable;
         updateDatabaseButton.Enabled = enable;
+        updateRetroarchButton.Enabled = enable;
         stopButton.Enabled = !enable;
         browseDllButton.Enabled = enable;
         browseAssetsButton.Enabled = enable;
         browseInfoButton.Enabled = enable;
         browseDatabaseButton.Enabled = enable;
+        browseRetroarchButton.Enabled = enable;
     }
 
     private void AboutButton_Click(object sender, EventArgs e)
@@ -377,6 +416,37 @@ public class MainForm : Form
         EnableButtons(true);
     }
 
+    private async void UpdateRetroarchButton_Click(object sender, EventArgs e)
+    {
+        isProcessRunning = true;
+        EnableButtons(false);
+
+        textBox.AppendText("Now starting the Retroarch update process...\r\n");
+
+        string retroarchDirectory = retroarchPathTextBox.Text;
+        string tempPath = Path.Combine(retroarchDirectory, "temp");
+
+        try
+        {
+            await UpdateFilesAsync7z(tempPath, Program.retroarchUrl, retroarchDirectory, textBox).ConfigureAwait(false);
+            textBox.AppendText("Retroarch updates have been completed.\r\n");
+        }
+        catch (HttpRequestException ex)
+        {
+            textBox.AppendText($"Network error updating Retroarch: {ex.Message}\r\n");
+        }
+        catch (IOException ex)
+        {
+            textBox.AppendText($"File error updating Retroarch: {ex.Message}\r\n");
+        }
+        catch (Exception ex)
+        {
+            textBox.AppendText($"Error updating Retroarch: {ex.Message}\r\n");
+        }
+
+        EnableButtons(true);
+    }
+
     private async Task UpdateFilesAsync(string tempPath, string zipUrl, string destinationDirectory, TextBox textBox)
     {
         try
@@ -462,6 +532,63 @@ public class MainForm : Form
         }
     }
 
+    private async Task UpdateFilesAsync7z(string tempPath, string sevenZipUrl, string destinationDirectory, TextBox textBox)
+    {
+        try
+        {
+            Directory.CreateDirectory(tempPath);
+            string sevenZipPath = Path.Combine(tempPath, "temp.7z");
+
+            using (HttpClient client = new HttpClient())
+            {
+                using (HttpResponseMessage response = await client.GetAsync(sevenZipUrl).ConfigureAwait(false))
+                {
+                    response.EnsureSuccessStatusCode();
+                    using (Stream contentStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false),
+                                  fileStream = new FileStream(sevenZipPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                    {
+                        await contentStream.CopyToAsync(fileStream).ConfigureAwait(false);
+                    }
+                }
+            }
+
+            using (var archive = ArchiveFactory.Open(sevenZipPath))
+            {
+                progressBar.Maximum = archive.Entries.Count();
+                progressBar.Value = 0;
+
+                foreach (var entry in archive.Entries)
+                {
+                    if (!entry.IsDirectory)
+                    {
+                        string destinationPath = Path.Combine(destinationDirectory, entry.Key);
+                        Directory.CreateDirectory(Path.GetDirectoryName(destinationPath));
+                        entry.WriteToFile(destinationPath, new ExtractionOptions() { ExtractFullPath = true, Overwrite = true });
+                        textBox.AppendText($"Extracted {entry.Key}\r\n");
+                    }
+
+                    progressBar.Value++;
+                }
+            }
+
+            File.Delete(sevenZipPath);
+            Directory.Delete(tempPath, true);
+
+            textBox.AppendText("Download and extraction completed\r\n");
+        }
+        catch (HttpRequestException ex)
+        {
+            textBox.AppendText($"Network error: {ex.Message}\r\n");
+        }
+        catch (IOException ex)
+        {
+            textBox.AppendText($"File error: {ex.Message}\r\n");
+        }
+        catch (Exception ex)
+        {
+            textBox.AppendText($"Error: {ex.Message}\r\n");
+        }
+    }
 
     private void BrowseDllButton_Click(object sender, EventArgs e)
     {
@@ -507,6 +634,17 @@ public class MainForm : Form
         }
     }
 
+    private void BrowseRetroarchButton_Click(object sender, EventArgs e)
+    {
+        using (FolderBrowserDialog dialog = new FolderBrowserDialog())
+        {
+            if (dialog.ShowDialog() == DialogResult.OK)
+            {
+                retroarchPathTextBox.Text = dialog.SelectedPath;
+            }
+        }
+    }
+
     public class AboutForm : Form
     {
         public AboutForm()
@@ -529,7 +667,7 @@ public class MainForm : Form
                 Width = 50,
             };
 
-            Label titleLabel = new Label() { Text = "Update libretro Cores and assets", Dock = DockStyle.Top, TextAlign = ContentAlignment.MiddleCenter };
+            Label titleLabel = new Label() { Text = "libretro Updater", Dock = DockStyle.Top, TextAlign = ContentAlignment.MiddleCenter };
             Label infoLabel = new Label() { Text = "©2024 John N. Bilbrey and ChatGPT", Dock = DockStyle.Bottom, TextAlign = ContentAlignment.BottomCenter };
 
             Controls.Add(titleLabel);
