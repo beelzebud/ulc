@@ -32,6 +32,7 @@ public class MainForm : Form
     private Button updateAssetsButton;
     private Button updateCoreInfoButton;
     private Button updateDatabaseButton;
+	private Button updateAllButton;
     private Button stopButton;
     private Button aboutButton;
     private Button updateRetroarchButton;
@@ -48,6 +49,7 @@ public class MainForm : Form
     private Button browseRetroarchButton;
     private bool isProcessRunning = false;
     private ProgressBar progressBar;
+    private ProgressBar progressBarOverall;
 
     public MainForm()
     {
@@ -70,21 +72,6 @@ public class MainForm : Form
         this.Icon = new System.Drawing.Icon(@"D:\Build\ulc\ulc\Resources\ulc.ico");
         this.BackColor = Color.DarkGray;
 
-        updateCoresButton = new Button() { Text = "Update libretro Cores", Dock = DockStyle.Top };
-        updateCoresButton.Click += new EventHandler(UpdateCoresButton_Click);
-
-        updateAssetsButton = new Button() { Text = "Update libretro Assets", Dock = DockStyle.Top };
-        updateAssetsButton.Click += new EventHandler(UpdateAssetsButton_Click);
-
-        updateCoreInfoButton = new Button() { Text = "Update Core Info", Dock = DockStyle.Top };
-        updateCoreInfoButton.Click += new EventHandler(UpdateCoreInfoButton_Click);
-
-        updateDatabaseButton = new Button() { Text = "Update libretro Database", Dock = DockStyle.Top };
-        updateDatabaseButton.Click += new EventHandler(UpdateDatabaseButton_Click);
-
-        updateRetroarchButton = new Button() { Text = "Update Retroarch", Dock = DockStyle.Top };
-        updateRetroarchButton.Click += new EventHandler(UpdateRetroarchButton_Click);
-
         stopButton = new Button() { Text = "Stop", Dock = DockStyle.Bottom };
         stopButton.Click += new EventHandler(StopButton_Click);
 
@@ -101,20 +88,33 @@ public class MainForm : Form
         textBox.ForeColor = Color.Lime;
         textBox.BackColor = Color.Black;
 
+        updateCoresButton = new Button() { Text = "Update libretro Cores", Dock = DockStyle.Top };
+        updateCoresButton.Click += new EventHandler(UpdateCoresButton_Click);
         dllPathTextBox = new TextBox() { Dock = DockStyle.Fill };
         dllPathTextBox.Text = @"D:\Emulators\RetroArch\RetroArch-Win64\cores\";
 
+        updateAssetsButton = new Button() { Text = "Update libretro Assets", Dock = DockStyle.Top };
+        updateAssetsButton.Click += new EventHandler(UpdateAssetsButton_Click);
         assetsPathTextBox = new TextBox() { Dock = DockStyle.Fill };
         assetsPathTextBox.Text = @"D:\Emulators\RetroArch\RetroArch-Win64\assets\";
 
+        updateCoreInfoButton = new Button() { Text = "Update Core Info", Dock = DockStyle.Top };
+        updateCoreInfoButton.Click += new EventHandler(UpdateCoreInfoButton_Click);
         infoPathTextBox = new TextBox() { Dock = DockStyle.Fill };
         infoPathTextBox.Text = @"D:\Emulators\RetroArch\RetroArch-Win64\info\";
 
+        updateDatabaseButton = new Button() { Text = "Update libretro Database", Dock = DockStyle.Top };
+        updateDatabaseButton.Click += new EventHandler(UpdateDatabaseButton_Click);
         databasePathTextBox = new TextBox() { Dock = DockStyle.Fill };
         databasePathTextBox.Text = @"D:\Emulators\RetroArch\RetroArch-Win64\database\";
 
+        updateRetroarchButton = new Button() { Text = "Update Retroarch", Dock = DockStyle.Top };
+        updateRetroarchButton.Click += new EventHandler(UpdateRetroarchButton_Click);
         retroarchPathTextBox = new TextBox() { Dock = DockStyle.Fill };
         retroarchPathTextBox.Text = @"D:\Emulators\RetroArch\";
+		
+		updateAllButton = new Button() { Text = "Update Everything", Dock = DockStyle.Top };
+        updateAllButton.Click += new EventHandler(UpdateAllButton_Click);
 
         browseDllButton = new Button() { Text = "Browse", Dock = DockStyle.Right };
         browseDllButton.Click += new EventHandler(BrowseDllButton_Click);
@@ -132,6 +132,8 @@ public class MainForm : Form
         browseRetroarchButton.Click += new EventHandler(BrowseRetroarchButton_Click);
 
         progressBar = new ProgressBar() { Dock = DockStyle.Bottom, Height = 20 };
+
+        progressBarOverall = new ProgressBar() { Dock = DockStyle.Bottom, Height = 20, Maximum = 5, Value = 0 }; // 5 steps for "Update All"
 
         TableLayoutPanel dllPanel = new TableLayoutPanel();
         dllPanel.Dock = DockStyle.Top;
@@ -198,6 +200,8 @@ public class MainForm : Form
         updateDatabaseButton.BackColor = Color.Black;
         updateRetroarchButton.ForeColor = Color.Lime;
         updateRetroarchButton.BackColor = Color.Black;
+        updateAllButton.ForeColor = Color.Lime;
+        updateAllButton.BackColor = Color.Black;    
         stopButton.ForeColor = Color.Lime;
         stopButton.BackColor = Color.Black;
         aboutButton.ForeColor = Color.Lime;
@@ -223,6 +227,8 @@ public class MainForm : Form
         updateDatabaseButton.FlatAppearance.BorderColor = Color.Lime;
         updateRetroarchButton.FlatStyle = FlatStyle.Flat;
         updateRetroarchButton.FlatAppearance.BorderColor = Color.Lime;
+        updateAllButton.FlatStyle = FlatStyle.Flat;
+        updateAllButton.FlatAppearance.BorderColor = Color.Lime;
         stopButton.FlatStyle = FlatStyle.Flat;
         stopButton.FlatAppearance.BorderColor = Color.Lime;
         browseDllButton.FlatStyle = FlatStyle.Flat;
@@ -237,6 +243,7 @@ public class MainForm : Form
         browseRetroarchButton.FlatAppearance.BorderColor = Color.Lime;
 
         Controls.Add(textBoxPanel);
+		Controls.Add(updateAllButton);
         Controls.Add(retroarchPanel);
         Controls.Add(databasePanel);
         Controls.Add(infoPanel);
@@ -247,9 +254,141 @@ public class MainForm : Form
         Controls.Add(updateCoreInfoButton);
         Controls.Add(updateAssetsButton);
         Controls.Add(updateCoresButton);
+        Controls.Add(progressBarOverall);
         Controls.Add(progressBar);
         Controls.Add(stopButton);
         Controls.Add(aboutButton);
+    }
+    private async void UpdateAllButton_Click(object sender, EventArgs e)
+    {
+        isProcessRunning = true;
+        EnableButtons(false);
+        progressBarOverall.Value = 0; // Reset the overall progress
+        textBox.AppendText("Starting full update process...\r\n");
+
+        try
+        {
+            await UpdateCoresAsync();
+            progressBarOverall.Value++; // Increment overall progress
+
+            await UpdateAssetsAsync();
+            progressBarOverall.Value++;
+
+            await UpdateCoreInfoAsync();
+            progressBarOverall.Value++;
+
+            await UpdateDatabaseAsync();
+            progressBarOverall.Value++;
+
+            await UpdateRetroarchAsync();
+            progressBarOverall.Value++;
+
+            textBox.AppendText("Full update process completed.\r\n");
+        }
+        catch (Exception ex)
+        {
+            textBox.AppendText($"Error during full update: {ex.Message}\r\n");
+        }
+        finally
+        {
+            EnableButtons(true);
+            isProcessRunning = false;
+        }
+    }
+    // New Async Methods for Updates
+    private async Task UpdateCoresAsync()
+    {
+        textBox.AppendText("Now starting the core update process...\r\n");
+        string dllDirectory = dllPathTextBox.Text;
+        string[] dllFiles = Directory.GetFiles(dllDirectory, "*.dll");
+        textBox.AppendText($"Found {dllFiles.Length} libretro cores in {dllDirectory}\r\n");
+
+        foreach (string dllFile in dllFiles)
+        {
+            if (!isProcessRunning) break;
+
+            string fileName = Path.GetFileNameWithoutExtension(dllFile);
+            string zipUrl = Program.remoteUrl + fileName + ".dll.zip";
+            string tempPath = Path.Combine(dllDirectory, "temp");
+
+            try
+            {
+                await UpdateFilesAsync(tempPath, zipUrl, dllDirectory, textBox).ConfigureAwait(true);
+            }
+            catch (Exception ex)
+            {
+                textBox.AppendText($"Error updating {fileName}: {ex.Message}\r\n");
+            }
+        }
+        textBox.AppendText("Libretro core updates have been completed.\r\n");
+    }
+
+    private async Task UpdateAssetsAsync()
+    {
+        textBox.AppendText("Now starting the asset update process...\r\n");
+        string assetsDirectory = assetsPathTextBox.Text;
+        string tempPath = Path.Combine(assetsDirectory, "temp");
+
+        try
+        {
+            await UpdateFilesAsync(tempPath, Program.assetsUrl, assetsDirectory, textBox).ConfigureAwait(true);
+            textBox.AppendText("Libretro asset updates have been completed.\r\n");
+        }
+        catch (Exception ex)
+        {
+            textBox.AppendText($"Error updating assets: {ex.Message}\r\n");
+        }
+    }
+
+    private async Task UpdateCoreInfoAsync()
+    {
+        textBox.AppendText("Now starting the core info update process...\r\n");
+        string infoDirectory = infoPathTextBox.Text;
+        string tempPath = Path.Combine(infoDirectory, "temp");
+
+        try
+        {
+            await UpdateFilesAsync(tempPath, Program.infoUrl, infoDirectory, textBox).ConfigureAwait(true);
+            textBox.AppendText("Libretro core info updates have been completed.\r\n");
+        }
+        catch (Exception ex)
+        {
+            textBox.AppendText($"Error updating core info: {ex.Message}\r\n");
+        }
+    }
+
+    private async Task UpdateDatabaseAsync()
+    {
+        textBox.AppendText("Now starting the database update process...\r\n");
+        string databaseDirectory = databasePathTextBox.Text;
+        string tempPath = Path.Combine(databaseDirectory, "temp");
+
+        try
+        {
+            await UpdateFilesAsync(tempPath, Program.databaseUrl, databaseDirectory, textBox).ConfigureAwait(true);
+            textBox.AppendText("Libretro database updates have been completed.\r\n");
+        }
+        catch (Exception ex)
+        {
+            textBox.AppendText($"Error updating database: {ex.Message}\r\n");
+        }
+    }
+
+    private async Task UpdateRetroarchAsync()
+    {
+        textBox.AppendText("Now starting the Retroarch update process...\r\n");
+        string retroarchDirectory = retroarchPathTextBox.Text;
+        string tempPath = Path.Combine(retroarchDirectory, "temp");
+
+        try
+        {
+            await UpdateFilesAsync7z(tempPath, Program.retroarchUrl, retroarchDirectory, textBox).ConfigureAwait(true);
+            textBox.AppendText("Retroarch updates have been completed.\r\n");
+        }
+        catch (Exception ex)
+        {
+            textBox.AppendText($"Error updating Retroarch: {ex.Message}\r\n");
+        }
     }
 
     private void EnableButtons(bool enable)
@@ -259,6 +398,7 @@ public class MainForm : Form
         updateCoreInfoButton.Enabled = enable;
         updateDatabaseButton.Enabled = enable;
         updateRetroarchButton.Enabled = enable;
+		updateAllButton.Enabled = enable;
         stopButton.Enabled = !enable;
         browseDllButton.Enabled = enable;
         browseAssetsButton.Enabled = enable;
