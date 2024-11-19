@@ -112,8 +112,8 @@ public class MainForm : Form
         updateRetroarchButton.Click += new EventHandler(UpdateRetroarchButton_Click);
         retroarchPathTextBox = new TextBox() { Dock = DockStyle.Fill };
         retroarchPathTextBox.Text = @"D:\Emulators\RetroArch\";
-		
-		updateAllButton = new Button() { Text = "Update Everything", Dock = DockStyle.Top };
+
+        updateAllButton = new Button() { Text = "Update Everything", Dock = DockStyle.Top };
         updateAllButton.Click += new EventHandler(UpdateAllButton_Click);
 
         browseDllButton = new Button() { Text = "Browse", Dock = DockStyle.Right };
@@ -808,8 +808,10 @@ public class MainForm : Form
             };
 
             Label titleLabel = new Label() { Text = "libretro Updater", Dock = DockStyle.Top, TextAlign = ContentAlignment.MiddleCenter };
+            Label versionLabel = new Label() { Text = "v1.1", Dock = DockStyle.Top, TextAlign = ContentAlignment.MiddleCenter };
             Label infoLabel = new Label() { Text = "©2024 John N. Bilbrey and ChatGPT", Dock = DockStyle.Bottom, TextAlign = ContentAlignment.BottomCenter };
 
+            Controls.Add(versionLabel);
             Controls.Add(titleLabel);
             Controls.Add(iconPictureBox);
             Controls.Add(infoLabel);
