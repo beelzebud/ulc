@@ -808,7 +808,7 @@ public class MainForm : Form
             };
 
             Label titleLabel = new Label() { Text = "libretro Updater", Dock = DockStyle.Top, TextAlign = ContentAlignment.MiddleCenter };
-            Label versionLabel = new Label() { Text = "v1.1", Dock = DockStyle.Top, TextAlign = ContentAlignment.MiddleCenter };
+            Label versionLabel = new Label() { Text = "v1.2", Dock = DockStyle.Top, TextAlign = ContentAlignment.MiddleCenter };
             Label infoLabel = new Label() { Text = "©2024 John N. Bilbrey and ChatGPT", Dock = DockStyle.Bottom, TextAlign = ContentAlignment.BottomCenter };
 
             Controls.Add(versionLabel);
