@@ -32,7 +32,7 @@ public class MainForm : Form
     private Button updateAssetsButton;
     private Button updateCoreInfoButton;
     private Button updateDatabaseButton;
-	private Button updateAllButton;
+    private Button updateAllButton;
     private Button stopButton;
     private Button aboutButton;
     private Button updateRetroarchButton;
