@@ -1,0 +1,81 @@
+public partial class MainForm : Form
+{
+    private CheckBox checkBoxDlls;
+    private CheckBox checkBoxAssets;
+    private CheckBox checkBoxCoreInfo;
+    private CheckBox checkBoxDatabase;
+    private CheckBox checkBoxRetroarch;
+    private Button updateSelectedButton;
+
+    public MainForm()
+    {
+        InitializeComponents();
+    }
+
+    private void InitializeComponents()
+    {
+        this.Text = "Updater";
+        this.Size = new Size(600, 400);
+        this.StartPosition = FormStartPosition.CenterScreen;
+
+        // Initialize checkboxes
+        checkBoxDlls = new CheckBox() { Text = "Update DLLs", Left = 20, Top = 20, Width = 200 };
+        checkBoxAssets = new CheckBox() { Text = "Update Assets", Left = 20, Top = 50, Width = 200 };
+        checkBoxCoreInfo = new CheckBox() { Text = "Update Core Info", Left = 20, Top = 80, Width = 200 };
+        checkBoxDatabase = new CheckBox() { Text = "Update Database", Left = 20, Top = 110, Width = 200 };
+        checkBoxRetroarch = new CheckBox() { Text = "Update Retroarch", Left = 20, Top = 140, Width = 200 };
+
+        // Initialize "Update Selected" button
+        updateSelectedButton = new Button()
+        {
+            Text = "Update Selected",
+            Left = 20,
+            Top = 180,
+            Width = 150,
+        };
+        updateSelectedButton.Click += UpdateSelectedButton_Click;
+
+        // Add controls to the form
+        this.Controls.Add(checkBoxDlls);
+        this.Controls.Add(checkBoxAssets);
+        this.Controls.Add(checkBoxCoreInfo);
+        this.Controls.Add(checkBoxDatabase);
+        this.Controls.Add(checkBoxRetroarch);
+        this.Controls.Add(updateSelectedButton);
+    }
+
+    private async void UpdateSelectedButton_Click(object sender, EventArgs e)
+    {
+        if (!isProcessRunning)
+        {
+            // Start selected update processes
+            if (checkBoxDlls.Checked)
+            {
+                await Task.Run(() => UpdateCoresButton_Click(sender, e));
+            }
+            if (checkBoxAssets.Checked)
+            {
+                await Task.Run(() => UpdateAssetsButton_Click(sender, e));
+            }
+            if (checkBoxCoreInfo.Checked)
+            {
+                await Task.Run(() => UpdateCoreInfoButton_Click(sender, e));
+            }
+            if (checkBoxDatabase.Checked)
+            {
+                await Task.Run(() => UpdateDatabaseButton_Click(sender, e));
+            }
+            if (checkBoxRetroarch.Checked)
+            {
+                await Task.Run(() => UpdateRetroarchButton_Click(sender, e));
+            }
+
+            // Notify the user
+            textBox.AppendText("Selected updates have been completed.\r\n");
+        }
+        else
+        {
+            textBox.AppendText("An update process is already running. Please wait.\r\n");
+        }
+    }
+}

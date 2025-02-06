@@ -50,6 +50,12 @@ public class MainForm : Form
     private bool isProcessRunning = false;
     private ProgressBar progressBar;
     private ProgressBar progressBarOverall;
+	private CheckBox checkBoxDlls;
+    private CheckBox checkBoxAssets;
+    private CheckBox checkBoxCoreInfo;
+    private CheckBox checkBoxDatabase;
+    private CheckBox checkBoxRetroarch;
+    private Button updateSelectedButton;
 
     public MainForm()
     {
@@ -106,15 +112,38 @@ public class MainForm : Form
         updateDatabaseButton = new Button() { Text = "Update libretro Database", Dock = DockStyle.Top };
         updateDatabaseButton.Click += new EventHandler(UpdateDatabaseButton_Click);
         databasePathTextBox = new TextBox() { Dock = DockStyle.Fill };
-        databasePathTextBox.Text = @"D:\Emulators\RetroArch\RetroArch-Win64\database\rdb\";
+        databasePathTextBox.Text = @"D:\Emulators\RetroArch\RetroArch-Win64\database\";
 
         updateRetroarchButton = new Button() { Text = "Update Retroarch", Dock = DockStyle.Top };
         updateRetroarchButton.Click += new EventHandler(UpdateRetroarchButton_Click);
         retroarchPathTextBox = new TextBox() { Dock = DockStyle.Fill };
         retroarchPathTextBox.Text = @"D:\Emulators\RetroArch\";
+		
+		checkBoxDlls = new CheckBox() { Text = "Update DLLs", Left = 20, Top = 20, Width = 200 };
+        checkBoxAssets = new CheckBox() { Text = "Update Assets", Left = 20, Top = 50, Width = 200 };
+        checkBoxCoreInfo = new CheckBox() { Text = "Update Core Info", Left = 20, Top = 80, Width = 200 };
+        checkBoxDatabase = new CheckBox() { Text = "Update Database", Left = 20, Top = 110, Width = 200 };
+        checkBoxRetroarch = new CheckBox() { Text = "Update Retroarch", Left = 20, Top = 140, Width = 200 };
 
-        updateAllButton = new Button() { Text = "Update Everything", Dock = DockStyle.Top };
-        updateAllButton.Click += new EventHandler(UpdateAllButton_Click);
+       updateSelectedButton = new Button()
+        {
+            Text = "Update Selected",
+            Left = 20,
+            Top = 180,
+            Width = 150,
+        };
+        updateSelectedButton.Click += UpdateSelectedButton_Click;
+		
+		this.Controls.Add(checkBoxDlls);
+        this.Controls.Add(checkBoxAssets);
+        this.Controls.Add(checkBoxCoreInfo);
+        this.Controls.Add(checkBoxDatabase);
+        this.Controls.Add(checkBoxRetroarch);
+        this.Controls.Add(updateSelectedButton);
+    }
+
+       // updateAllButton = new Button() { Text = "Update Everything", Dock = DockStyle.Top };
+      //  updateAllButton.Click += new EventHandler(UpdateAllButton_Click);
 
         browseDllButton = new Button() { Text = "Browse", Dock = DockStyle.Right };
         browseDllButton.Click += new EventHandler(BrowseDllButton_Click);
@@ -258,8 +287,35 @@ public class MainForm : Form
         Controls.Add(progressBar);
         Controls.Add(stopButton);
         Controls.Add(aboutButton);
+		
+		   private async void UpdateSelectedButton_Click(object sender, EventArgs e)
+    {
+        if (!isProcessRunning)
+        {
+            // Start selected update processes
+            if (checkBoxDlls.Checked)
+            {
+                await Task.Run(() => UpdateCoresButton_Click(sender, e));
+            }
+            if (checkBoxAssets.Checked)
+            {
+                await Task.Run(() => UpdateAssetsButton_Click(sender, e));
+            }
+            if (checkBoxCoreInfo.Checked)
+            {
+                await Task.Run(() => UpdateCoreInfoButton_Click(sender, e));
+            }
+            if (checkBoxDatabase.Checked)
+            {
+                await Task.Run(() => UpdateDatabaseButton_Click(sender, e));
+            }
+            if (checkBoxRetroarch.Checked)
+            {
+                await Task.Run(() => UpdateRetroarchButton_Click(sender, e));
+            }
+
     }
-    private async void UpdateAllButton_Click(object sender, EventArgs e)
+/*     private async void UpdateAllButton_Click(object sender, EventArgs e)
     {
         isProcessRunning = true;
         EnableButtons(false);
@@ -294,7 +350,7 @@ public class MainForm : Form
             EnableButtons(true);
             isProcessRunning = false;
         }
-    }
+    } */
     // New Async Methods for Updates
     private async Task UpdateCoresAsync()
     {
@@ -586,6 +642,12 @@ public class MainForm : Form
 
         EnableButtons(true);
     }
+	
+	            textBox.AppendText("Selected updates have been completed.\r\n");
+        }
+        else
+        {
+            textBox.AppendText("An update process is already running. Please wait.\r\n");
 
     private async Task UpdateFilesAsync(string tempPath, string zipUrl, string destinationDirectory, TextBox textBox)
     {

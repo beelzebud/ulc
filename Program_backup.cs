@@ -106,7 +106,7 @@ public class MainForm : Form
         updateDatabaseButton = new Button() { Text = "Update libretro Database", Dock = DockStyle.Top };
         updateDatabaseButton.Click += new EventHandler(UpdateDatabaseButton_Click);
         databasePathTextBox = new TextBox() { Dock = DockStyle.Fill };
-        databasePathTextBox.Text = @"D:\Emulators\RetroArch\RetroArch-Win64\database\rdb\";
+        databasePathTextBox.Text = @"D:\Emulators\RetroArch\RetroArch-Win64\database\";
 
         updateRetroarchButton = new Button() { Text = "Update Retroarch", Dock = DockStyle.Top };
         updateRetroarchButton.Click += new EventHandler(UpdateRetroarchButton_Click);
